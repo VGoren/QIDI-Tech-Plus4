@@ -1,30 +1,29 @@
-﻿# 1. Бэкапим родной список репозиториев (только если бэкапа еще нет)
-# Это защитит от перезаписи чистого бэкапа архивными данными при повторном запусте.
-[ ! -f /etc/apt/sources.list.bak ] && sudo mv /etc/apt/sources.list /etc/apt/sources.list.bak
+﻿# QIDI Tech Plus 4 Config Management
 
-# 2. Прописываем архивные зеркала Debian Buster (т.к. основные сервера Debian 10 отключены)
-# archive.debian.org — это вечный "замороженный" архив для старых систем.
-echo "deb http://archive.debian.org/debian buster main contrib non-free
-deb http://archive.debian.org/debian-security buster/updates main contrib non-free" | sudo tee /etc/apt/sources.list
+Репозиторий для управления конфигурациями принтера.
 
-# 3. Убираем проверку Check-Valid-Until для пакетов
-# Т.к. репозиторий не обновляется, apt по умолчанию считает его "просроченным" и выдает ошибку.
-echo "Acquire::Check-Valid-Until \"false\";" | sudo tee /etc/apt/apt.conf.d/10no--check-valid-until
+## Быстрая настройка
 
-# 4. Обновляем кеш пакетного менеджера
-# После этого можно ставить любые пакеты через apt install (например, samba, htop, git).
-sudo apt update
+Для полной настройки принтера и подключения его как сетевого диска выполните скрипт:
 
+1. Откройте PowerShell в папке проекта.
+2. Запустите:
+   ```powershell
+   .\setup_printer.ps1
+   ```
+   *(Если появится ошибка прав доступа, запустите `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass`)*
 
-sudo apt install samba -y
+### Что сделает скрипт:
+- **На принтере:** пропишет архивные репозитории Debian Buster, установит Samba, откроет полный доступ к корню (`/`) и разрешит переход по системным ссылкам.
+- **В Windows:** примонтирует корень принтера как сетевой диск `Z:`.
 
-# Добавляем права доступа к папке конфигов в основной конфиг Samba
-echo "
-[QidiConfig]
-   comment    = Qidi Plus 4 Configs
-   path       = /home/mks/printer_data/config
-   browseable = yes
-   read only  = no
-   guest ok   = no
-   force user = mks
-" | sudo tee -a /etc/samba/smb.conf
+## Работа в IDE
+
+1. Откройте этот репозиторий в Android Studio / IntelliJ.
+2. Файлы принтера доступны по пути `Z:\`.
+3. Конфиги Klipper: `Z:\home\mks\printer_data\config`.
+4. Копируйте нужные файлы с диска `Z:` в этот проект и коммитьте.
+
+## Траблшутинг
+- **Пароль SSH:** По умолчанию `makerbase`. Скрипт попросит его при первом подключении.
+- **Samba:** Если диск не монтируется, проверьте, что принтер пингуется и порт 445 открыт.
