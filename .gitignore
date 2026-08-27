@@ -1,24 +1,5 @@
 # IDE
 .idea/
-*.iml
-*.ps1
 
-# Тяжелые файлы (модели и медиа)
-home∕mks∕printer_data∕gcodes/
-home∕mks∕printer_data∕comms/
-home∕mks∕printer_data∕videos/
-home∕mks∕printer_data∕timelapse/
-home∕mks∕printer_data∕logs/
-
-# Оставляем только конфиги для Git
-!etc/
-!home∕mks∕printer_data∕config/
-
-# Игнорируем мусор
-**/ *.bak
-**/ *.log
-**/ *.bin
-**/ *.pyc
-**/ .DS_Store
-etc/ld.so.cache
-etc/udev/hwdb.bin
+home∕mks∕printer_data∕logs/*
+home∕mks∕printer_data∕gcodes/*

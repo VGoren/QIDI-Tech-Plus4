@@ -4,36 +4,39 @@ $S = [char]0x2215
 $ProjectRoot = Split-Path $PSScriptRoot -Parent
 $RemoteBase = "Y:/"
 
-# Очищаем битые lock-файлы rclone перед стартом, чтобы не было ошибки "prior lock file found"
-$RcloneCache = Join-Path $env:LOCALAPPDATA "rclone/bisync"
-if (Test-Path $RcloneCache) {
-    Get-ChildItem -Path $RcloneCache -Filter "*.lck" | Remove-Item -Force -ErrorAction SilentlyContinue
-}
-
 $Pairs = @(
-    @{ L="etc"; R="etc"; Mode="bisync" },
-    @{ L="home$($S)mks$($S)printer_data$($S)config"; R="home/mks/printer_data/config"; Mode="bisync" },
-    @{ L="home$($S)mks$($S)printer_data$($S)gcodes"; R="home/mks/printer_data/gcodes"; Mode="bisync" },
-    @{ L="home$($S)mks$($S)printer_data$($S)logs"; R="home/mks/printer_data/logs"; Mode="pull" }
+    @{ L="home/mks/printer_data/config";  R="home/mks/printer_data/config"; Mode="bisync" }
+    @{ L="home/mks/printer_data/gcodes";  R="home/mks/printer_data/gcodes"; Mode="bisync" }
+    @{ L="home/mks/printer_data/logs";    R="home/mks/printer_data/logs";   Mode="pull"   }
 )
 
-Write-Host ">>> СИНХРОНИЗАЦИЯ Rclone..." -ForegroundColor Cyan
+$Resync = "--resync"
+$LockDir = Join-Path $env:LOCALAPPDATA "rclone/bisync"
 
-foreach ($Item in $Pairs) {
-    $LocalPath = Join-Path $ProjectRoot $Item.L
-    $RemotePath = Join-Path $RemoteBase $Item.R
+Write-Host ">>> AUTO-WATCHER ENABLED (Interval: 2s) <<<" -ForegroundColor Magenta
+Write-Host ">>> Press Ctrl+C to stop.`n" -ForegroundColor Gray
 
-    if (-not (Test-Path $LocalPath)) { New-Item -ItemType Directory -Path $LocalPath -Force | Out-Null }
+while ($true) {
+    # Чистим замки перед каждым циклом, чтобы избежать зависаний "prior lock file found"
+    if (Test-Path $LockDir) { Get-ChildItem $LockDir -Filter "*.lck" | Remove-Item -Force -ErrorAction SilentlyContinue }
 
-    if ($Item.Mode -eq "bisync") {
-        Write-Host "`n↔ 2-Way Sync: $($Item.L)" -ForegroundColor Yellow
-        # Оставляем --resync ПОСЛЕДНИЙ РАЗ для etc и gcodes.
-        rclone bisync "$LocalPath" "$RemotePath" --fix-case --conflict-resolve newer --verbose --resync
-    } else {
-        Write-Host "`n↓ Pull Sync: $($Item.L)" -ForegroundColor Green
-        rclone copy "$RemotePath" "$LocalPath" --update --progress
+    foreach ($Item in $Pairs) {
+        $FlatName = $Item.L.Replace('/', $S)
+        $FullLocal = Join-Path $ProjectRoot $FlatName
+        $FullRemote = Join-Path $RemoteBase $Item.R
+
+        if (-not (Test-Path $FullLocal)) { New-Item -ItemType Directory -Path $FullLocal -Force | Out-Null }
+
+        if ($Item.Mode -eq "bisync") {
+            # Вывод логов rclone идет напрямую в консоль
+            rclone bisync "$FullLocal" "$FullRemote" --fix-case --conflict-resolve newer $Resync --verbose
+        } else {
+            rclone copy "$FullRemote" "$FullLocal" --update --verbose
+        }
     }
-}
 
-Write-Host "`n>>> ГОТОВО! Папки etc и gcodes должны быть синхронизированы." -ForegroundColor Green
-pause
+    # Снимаем флаг ресинка после первой успешной итерации
+    if ($Resync -eq "--resync") { $Resync = "" }
+
+    Start-Sleep -Seconds 2
+}
