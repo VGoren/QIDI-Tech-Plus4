@@ -3,3 +3,8 @@
 
 home∕mks∕printer_data∕logs/*
 home∕mks∕printer_data∕gcodes/*
+home∕mks∕printer_data∕config/printer-*.cfg
+home∕mks∕printer_data∕config/printer_*.cfg
+home∕mks∕printer_data∕config/gcode_macro_*.cfg
+home∕mks∕printer_data∕config/*.bak
+home∕mks∕printer_data∕config/*.bkp
