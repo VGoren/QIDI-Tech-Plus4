@@ -31,7 +31,7 @@ name                           = aws
 
 
 [device_code]
-value                          = kn68fsmx
+value                          = NULL
 
 
 [device_state]
