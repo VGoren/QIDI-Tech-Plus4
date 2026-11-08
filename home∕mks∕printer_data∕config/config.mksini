@@ -42,3 +42,11 @@ state                          = standby_0.00
 enable                         = 0
 
 
+[pops]
+pop_1                          = false
+
+
+[total]
+time                           = 34
+
+
